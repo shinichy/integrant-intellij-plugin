@@ -1,6 +1,6 @@
-package org.jetbrains.plugins.template.services
+package com.github.shinichy.intelliintegrant.services
 
-import org.jetbrains.plugins.template.MyBundle
+import com.github.shinichy.intelliintegrant.MyBundle
 
 class MyApplicationService {
 
