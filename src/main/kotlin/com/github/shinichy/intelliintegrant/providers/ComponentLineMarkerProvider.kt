@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import cursive.psi.impl.ClEditorKeyword
 
 
@@ -14,16 +15,14 @@ class ComponentLineMarkerProvider : RelatedItemLineMarkerProvider() {
         element: PsiElement,
         result: MutableCollection<in RelatedItemLineMarkerInfo<*>?>
     ) {
-        if (element !is ClEditorKeyword) {
-            return
-        }
-
-        val components = Util.findComponents(element.project)
-        components.firstOrNull { it.qualifiedName == element.qualifiedName }?.let { component ->
-            val builder = NavigationGutterIconBuilder.create(AllIcons.Actions.GroupByClass)
-                .setTargets(component)
-                .setTooltipText("Navigate to Integrant component implementation")
-            result.add(builder.createLineMarkerInfo(element))
+        if (element is LeafPsiElement && element.getParent() is ClEditorKeyword) {
+            val components = Util.findComponents(element.project)
+            components.firstOrNull { it.qualifiedName == element.text }?.let { component ->
+                val builder = NavigationGutterIconBuilder.create(AllIcons.Actions.GroupByClass)
+                    .setTargets(component)
+                    .setTooltipText("Navigate to Integrant component implementation")
+                result.add(builder.createLineMarkerInfo(element))
+            }
         }
     }
 }
