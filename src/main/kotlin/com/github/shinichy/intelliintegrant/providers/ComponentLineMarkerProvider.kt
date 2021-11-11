@@ -7,7 +7,8 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import cursive.psi.impl.ClEditorKeyword
+import cursive.psi.api.ClKeyword
+import cursive.psi.api.ClMap
 
 
 class ComponentLineMarkerProvider : RelatedItemLineMarkerProvider() {
@@ -15,9 +16,16 @@ class ComponentLineMarkerProvider : RelatedItemLineMarkerProvider() {
         element: PsiElement,
         result: MutableCollection<in RelatedItemLineMarkerInfo<*>?>
     ) {
-        if (element is LeafPsiElement && element.getParent() is ClEditorKeyword) {
-            val components = Util.findComponents(element.project)
-            components.firstOrNull { it.qualifiedName == element.text }?.let { component ->
+        val isQualifiedKeyword by lazy { (element.parent as ClKeyword).namespace != null }
+        val isTopLevel by lazy { element.parent.parent is ClMap }
+
+        if (element is LeafPsiElement &&
+            element.parent is ClKeyword &&
+            isQualifiedKeyword &&
+            isTopLevel
+        ) {
+            val implementations = Util.findImplementations(element.project)
+            implementations.firstOrNull { it.qualifiedName == element.text }?.let { component ->
                 val builder = NavigationGutterIconBuilder.create(AllIcons.Actions.GroupByClass)
                     .setTargets(component)
                     .setTooltipText("Navigate to Integrant component implementation")

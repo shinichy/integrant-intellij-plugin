@@ -6,20 +6,20 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import cursive.gotoclass.ClojureGoToSymbolContributor
 import cursive.parser.ClojureElementTypes
-import cursive.psi.impl.ClEditorKeyword
-import cursive.psi.impl.synthetic.SyntheticSymbol
+import cursive.psi.api.ClKeyword
+import cursive.psi.api.symbols.ClSymbol
 
 object Util {
-    fun findComponents(project: Project): List<ClEditorKeyword> {
+    fun findImplementations(project: Project): List<ClKeyword> {
         return ClojureGoToSymbolContributor()
             .getItemsByName("init-key", "init-key", project, true)
-            .filterIsInstance(SyntheticSymbol::class.java)
+            .filterIsInstance(ClSymbol::class.java)
             .firstOrNull()
             ?.let { symbol ->
                 ReferencesSearch.search(symbol).map { UsageInfo(it) }.mapNotNull { info ->
                     info.element?.let { element ->
                         PsiTreeUtil.findSiblingForward(element, ClojureElementTypes.KEYWORD, null)?.let {
-                            it as? ClEditorKeyword
+                            it as? ClKeyword
                         }
                     }
                 }
