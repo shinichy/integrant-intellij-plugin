@@ -1,6 +1,7 @@
 package com.github.shinichy.intelliintegrant
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.ProjectScopeBuilder
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
@@ -14,9 +15,10 @@ object Util {
         return ClojureGoToSymbolContributor()
             .getItemsByName("init-key", "init-key", project, true)
             .filterIsInstance(ClSymbol::class.java)
-            .firstOrNull()
+            .firstOrNull { it.namespace == "integrant.core" }
             ?.let { symbol ->
-                ReferencesSearch.search(symbol).map { UsageInfo(it) }.mapNotNull { info ->
+                val projectScope = ProjectScopeBuilder.getInstance(project).buildProjectScope()
+                ReferencesSearch.search(symbol, projectScope).map { UsageInfo(it) }.mapNotNull { info ->
                     info.element?.let { element ->
                         PsiTreeUtil.findSiblingForward(element, ClojureElementTypes.KEYWORD, null)?.let {
                             it as? ClKeyword
