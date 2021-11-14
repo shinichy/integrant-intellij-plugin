@@ -11,20 +11,24 @@ import cursive.psi.api.ClKeyword
 import cursive.psi.api.symbols.ClSymbol
 
 object Util {
-    fun findImplementations(project: Project): List<ClKeyword> {
+    // Find keywords followed by integrant.core/init-key
+    fun findImplementations(project: Project): Iterable<ClKeyword> {
         return ClojureGoToSymbolContributor()
             .getItemsByName("init-key", "init-key", project, true)
             .filterIsInstance(ClSymbol::class.java)
             .firstOrNull { it.namespace == "integrant.core" }
             ?.let { symbol ->
                 val searchScope = GlobalSearchScopesCore.projectProductionScope(project)
-                ReferencesSearch.search(symbol, searchScope).map { UsageInfo(it) }.mapNotNull { info ->
-                    info.element?.let { element ->
-                        PsiTreeUtil.findSiblingForward(element, ClojureElementTypes.KEYWORD, null)?.let {
-                            it as? ClKeyword
+
+                ReferencesSearch.search(symbol, searchScope)
+                    .map { UsageInfo(it) }
+                    .mapNotNull { info ->
+                        info.element?.let { element ->
+                            PsiTreeUtil.findSiblingForward(element, ClojureElementTypes.KEYWORD, null)?.let {
+                                it as? ClKeyword
+                            }
                         }
                     }
-                }
             }.orEmpty()
     }
 }
