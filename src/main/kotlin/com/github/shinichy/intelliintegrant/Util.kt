@@ -1,7 +1,7 @@
 package com.github.shinichy.intelliintegrant
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.ProjectScopeBuilder
+import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
@@ -17,8 +17,8 @@ object Util {
             .filterIsInstance(ClSymbol::class.java)
             .firstOrNull { it.namespace == "integrant.core" }
             ?.let { symbol ->
-                val projectScope = ProjectScopeBuilder.getInstance(project).buildProjectScope()
-                ReferencesSearch.search(symbol, projectScope).map { UsageInfo(it) }.mapNotNull { info ->
+                val searchScope = GlobalSearchScopesCore.projectProductionScope(project)
+                ReferencesSearch.search(symbol, searchScope).map { UsageInfo(it) }.mapNotNull { info ->
                     info.element?.let { element ->
                         PsiTreeUtil.findSiblingForward(element, ClojureElementTypes.KEYWORD, null)?.let {
                             it as? ClKeyword

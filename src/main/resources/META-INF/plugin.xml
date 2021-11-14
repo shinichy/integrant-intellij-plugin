@@ -8,7 +8,7 @@
     <depends>com.cursiveclojure.cursive</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <codeInsight.lineMarkerProvider language="Clojure"
-                                        implementationClass="com.github.shinichy.intelliintegrant.providers.ComponentLineMarkerProvider"/>
+        <!--suppress PluginXmlValidity -->
+        <lang.directNavigationProvider implementation="com.github.shinichy.intelliintegrant.IntegrantNavigationProvider"/>
     </extensions>
 </idea-plugin>
