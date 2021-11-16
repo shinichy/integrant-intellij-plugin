@@ -1,6 +1,6 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.shinichy.intelliintegrant</id>
+    <id>com.github.shinichy.integrant</id>
     <name>Integrant</name>
     <vendor>Shinichi Katayama</vendor>
 
@@ -9,6 +9,6 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!--suppress PluginXmlValidity -->
-        <lang.directNavigationProvider implementation="com.github.shinichy.intelliintegrant.IntegrantNavigationProvider"/>
+        <lang.directNavigationProvider implementation="com.github.shinichy.integrant.IntegrantNavigationProvider"/>
     </extensions>
 </idea-plugin>

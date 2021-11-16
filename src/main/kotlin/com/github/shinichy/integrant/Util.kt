@@ -1,4 +1,4 @@
-package com.github.shinichy.intelliintegrant
+package com.github.shinichy.integrant
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScopesCore

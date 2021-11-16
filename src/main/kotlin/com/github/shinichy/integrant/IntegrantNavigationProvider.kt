@@ -1,6 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
-package com.github.shinichy.intelliintegrant
+package com.github.shinichy.integrant
 
 import com.intellij.navigation.DirectNavigationProvider
 import com.intellij.psi.PsiElement

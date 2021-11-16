@@ -1,1 +1,1 @@
-rootProject.name = "intelli-integrant"
+rootProject.name = "integrant-intellij-plugin"
