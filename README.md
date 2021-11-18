@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/18019-integrant.svg)](https://plugins.jetbrains.com/plugin/18019-integrant)
 
 <!-- Plugin description -->
-IntelliJ IDEA plugin that provides navigation to Clojure <a href="https://github.com/weavejester/integrant">Integrant</a> component implementation from key.
+Provides navigation to Clojure <a href="https://github.com/weavejester/integrant">Integrant</a> component implementation from key.
 This plugin depends on Cursive.
 <!-- Plugin description end -->
 
