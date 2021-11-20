@@ -11,6 +11,7 @@ import cursive.ClojureLanguage
 import cursive.psi.api.ClKeyword
 import cursive.psi.api.ClMap
 import cursive.psi.api.ClTaggedLiteral
+import cursive.psi.api.ClVector
 import cursive.psi.impl.ClEditorKeyword
 import cursive.psi.impl.ClSharp
 import cursive.psi.impl.synthetic.SyntheticKeyword
@@ -23,7 +24,7 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
                 (element.parent as ClKeyword).namespace != null
     }
 
-    private fun isRef(element: PsiElement): Boolean {
+    private fun isSingleRef(element: PsiElement): Boolean {
         return if (element.parent is ClKeyword && element.parent.parent is ClTaggedLiteral) {
             val taggedLiteral = element.parent.parent
             return (PsiTreeUtil.findChildOfType(taggedLiteral, ClSharp::class.java)?.let {
@@ -32,17 +33,51 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
         } else false
     }
 
+    private fun isCompositeRef(element: PsiElement): Boolean {
+        return if (element.parent is ClKeyword && element.parent.parent is ClVector && element.parent.parent.parent is ClTaggedLiteral) {
+            val taggedLiteral = element.parent.parent.parent
+            return (PsiTreeUtil.findChildOfType(taggedLiteral, ClSharp::class.java)?.let {
+                it.containedElement?.text == "ig/ref"
+            } == true)
+        } else false
+    }
+
     private fun findConfiguration(keyword: SyntheticKeyword): PsiElement? {
         return ReferencesSearch.search(keyword, keyword.useScope)
-            .map { UsageInfo(it) }
-            .firstOrNull { info ->
-                info.element?.let { it.parent is ClMap } == true
-            }?.element
+            .mapNotNull { UsageInfo(it).element }
+            .firstOrNull { it.parent is ClMap }
+    }
+
+    private fun findConfigurationByCompositeKey(element: PsiElement): PsiElement? {
+        val vector = element.parent.parent as ClVector
+        val keywords = PsiTreeUtil.findChildrenOfType(vector, ClKeyword::class.java)
+
+        if (keywords.isNotEmpty()) {
+            return ReferencesSearch.search(
+                (keywords.first() as ClEditorKeyword).resolve() as SyntheticKeyword,
+                keywords.first().useScope
+            )
+                .mapNotNull { UsageInfo(it).element }
+                .firstOrNull { usedElement ->
+                    val targetVector = usedElement.parent
+                    val isTopLevelMapKey = targetVector is ClVector && targetVector.parent is ClMap
+                    val targetKeywords =
+                        PsiTreeUtil.findChildrenOfType(targetVector, ClKeyword::class.java).map { it.text }
+                    isTopLevelMapKey && keywords.map { it.text } == targetKeywords
+                }
+
+        } else {
+            return null
+        }
     }
 
     override fun getNavigationElement(element: PsiElement): PsiElement? {
         if (element.language == ClojureLanguage.getInstance()) {
-            if (isRef(element)) {
+            if (isCompositeRef(element)) {
+                return findConfigurationByCompositeKey(element)
+            }
+
+            if (isSingleRef(element)) {
                 return findConfiguration((element.parent as ClEditorKeyword).resolve() as SyntheticKeyword)
             }
 
