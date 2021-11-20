@@ -43,7 +43,7 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
     }
 
     private fun findConfiguration(keyword: SyntheticKeyword): PsiElement? {
-        return ReferencesSearch.search(keyword, keyword.useScope)
+        return ReferencesSearch.search(keyword, keyword.resolveScope)
             .mapNotNull { UsageInfo(it).element }
             .firstOrNull { it.parent is ClMap }
     }
@@ -55,7 +55,7 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
         if (keywords.isNotEmpty()) {
             return ReferencesSearch.search(
                 (keywords.first() as ClEditorKeyword).resolve() as SyntheticKeyword,
-                keywords.first().useScope
+                keywords.first().resolveScope
             )
                 .mapNotNull { UsageInfo(it).element }
                 .firstOrNull { usedElement ->
@@ -82,7 +82,7 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
             }
 
             return if (isQualifiedKeyword(element)) {
-                Util.findImplementations(element.project, element.useScope)
+                Util.findImplementations(element.project, element.resolveScope)
                     .firstOrNull { it.qualifiedName == element.text }
             } else null
         } else {
