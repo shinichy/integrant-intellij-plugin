@@ -4,6 +4,7 @@ package com.github.shinichy.integrant
 
 import com.intellij.navigation.DirectNavigationProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
@@ -42,8 +43,10 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
         } else false
     }
 
-    private fun findConfiguration(keyword: SyntheticKeyword): PsiElement? {
-        return ReferencesSearch.search(keyword, keyword.resolveScope)
+    private fun findConfiguration(element: PsiElement): PsiElement? {
+        val keyword = (element.parent as ClEditorKeyword).resolve() as SyntheticKeyword
+        val scope = GlobalSearchScopesCore.directoryScope(element.containingFile.containingDirectory, true)
+        return ReferencesSearch.search(keyword, scope)
             .mapNotNull { UsageInfo(it).element }
             .firstOrNull { it.parent is ClMap }
     }
@@ -53,10 +56,9 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
         val keywords = PsiTreeUtil.findChildrenOfType(vector, ClKeyword::class.java)
 
         if (keywords.isNotEmpty()) {
-            return ReferencesSearch.search(
-                (keywords.first() as ClEditorKeyword).resolve() as SyntheticKeyword,
-                keywords.first().resolveScope
-            )
+            val keyword = (keywords.first() as ClEditorKeyword).resolve() as SyntheticKeyword
+            val scope = GlobalSearchScopesCore.directoryScope(element.containingFile.containingDirectory, true)
+            return ReferencesSearch.search(keyword, scope)
                 .mapNotNull { UsageInfo(it).element }
                 .firstOrNull { usedElement ->
                     val targetVector = usedElement.parent
@@ -78,11 +80,14 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
             }
 
             if (isSingleRef(element)) {
-                return findConfiguration((element.parent as ClEditorKeyword).resolve() as SyntheticKeyword)
+                return findConfiguration(element)
             }
 
             return if (isQualifiedKeyword(element)) {
-                Util.findImplementations(element.project, element.resolveScope)
+                Util.findImplementations(
+                    element.project,
+                    GlobalSearchScopesCore.projectProductionScope(element.project)
+                )
                     .firstOrNull { it.qualifiedName == element.text }
             } else null
         } else {
