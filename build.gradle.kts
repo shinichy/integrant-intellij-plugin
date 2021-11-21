@@ -121,4 +121,6 @@ tasks {
     buildSearchableOptions {
         enabled = false
     }
+
+    runIde { maxHeapSize = "2g" }
 }

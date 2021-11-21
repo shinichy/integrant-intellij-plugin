@@ -12,7 +12,7 @@
       <option name="taskNames">
         <list />
       </option>
-      <option name="vmOptions" value="-Xmx2048m" />
+      <option name="vmOptions" value="" />
     </ExternalSystemSettings>
     <ExternalSystemDebugServerProcess>true</ExternalSystemDebugServerProcess>
     <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
