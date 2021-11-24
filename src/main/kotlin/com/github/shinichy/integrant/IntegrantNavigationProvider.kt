@@ -3,6 +3,7 @@
 package com.github.shinichy.integrant
 
 import com.intellij.navigation.DirectNavigationProvider
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -12,18 +13,15 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import cursive.ClojureLanguage
-import cursive.psi.api.ClKeyword
-import cursive.psi.api.ClMap
-import cursive.psi.api.ClTaggedLiteral
-import cursive.psi.api.ClVector
+import cursive.psi.api.*
 import cursive.psi.impl.ClEditorKeyword
-import cursive.psi.impl.ClLiteralImpl
 import cursive.psi.impl.ClSharp
 import cursive.psi.impl.ClTaggedLiteralImpl
 import cursive.psi.impl.synthetic.SyntheticKeyword
 
 
 class IntegrantNavigationProvider : DirectNavigationProvider {
+    private val log = logger<IntegrantNavigationProvider>()
 
     private fun isQualifiedKeyword(element: PsiElement): Boolean {
         return element.parent is ClKeyword &&
@@ -50,36 +48,51 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
 
     private fun getIncludedFiles(element: PsiElement): List<VirtualFile> {
         val module = ModuleUtil.findModuleForPsiElement(element)
+        log.debug("module: $module")
 
         return module?.let {
-            PsiTreeUtil.findChildrenOfType(element.containingFile, ClTaggedLiteralImpl::class.java)
-                .filter { taggedLiteral ->
-                    (PsiTreeUtil.findChildOfType(taggedLiteral, ClSharp::class.java)?.let {
-                        it.containedElement?.text == "duct/include"
-                    } == true)
-                }
-                .mapNotNull { includeLiteral ->
-                    val maybeOrigFilePath =
-                        PsiTreeUtil.findChildOfType(includeLiteral, ClLiteralImpl::class.java)?.let {
-                            it.text.substring(1, it.text.length - 1)
-                        }
+            val moduleRootManager = ModuleRootManager.getInstance(module)
 
-                    maybeOrigFilePath?.let { origFilePath ->
-                        val librarySourceRoots = ModuleRootManager.getInstance(module).orderEntries().allSourceRoots
-                        val sourceRoots = ModuleRootManager.getInstance(it).sourceRoots + librarySourceRoots
-                        listOf(origFilePath, "$origFilePath.edn").flatMap { filePath ->
-                            sourceRoots.mapNotNull {
-                                VfsUtilCore.findRelativeFile(filePath, it)
-                            }
+            val clTaggedLiterals =
+                PsiTreeUtil.findChildrenOfType(element.containingFile, ClTaggedLiteralImpl::class.java)
+            log.debug("clTaggedLiterals: ${clTaggedLiterals.map{it.text}}")
+
+            val includes = clTaggedLiterals.filter { taggedLiteral ->
+                (PsiTreeUtil.findChildOfType(taggedLiteral, ClSharp::class.java)?.let {
+                    it.containedElement?.text == "duct/include"
+                } == true)
+            }
+            log.debug("includes: ${includes.map{it.text}}")
+
+            includes.mapNotNull { includeLiteral ->
+                val maybeOrigFilePath =
+                    PsiTreeUtil.findChildOfType(includeLiteral, ClLiteral::class.java)?.let {
+                        it.text.substring(1, it.text.length - 1)
+                    }
+
+                if (maybeOrigFilePath == null) {
+                    log.debug("origFilePath is null. includeLiteral: ${includeLiteral.text}")
+                }
+
+                maybeOrigFilePath?.let { origFilePath ->
+                    val sourceRoots =
+                        moduleRootManager.sourceRoots + moduleRootManager.orderEntries().allSourceRoots
+                    log.debug("sourceRoots: $sourceRoots")
+
+                    listOf(origFilePath, "$origFilePath.edn").flatMap { filePath ->
+                        sourceRoots.mapNotNull {
+                            VfsUtilCore.findRelativeFile(filePath, it)
                         }
                     }
-                }.flatten()
+                }
+            }.flatten()
         }.orEmpty()
     }
 
     private fun findKeywordUsages(element: PsiElement): List<PsiElement> {
         val keyword = (element.parent as ClEditorKeyword).resolve() as SyntheticKeyword
         val includedFiles = getIncludedFiles(element) + element.containingFile.virtualFile
+        log.debug("includedFiles: $includedFiles")
         val scope = FilesSearchScope(includedFiles.toSet())
         return ReferencesSearch.search(keyword, scope).mapNotNull { UsageInfo(it).element }
     }
@@ -109,14 +122,17 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
     override fun getNavigationElement(element: PsiElement): PsiElement? {
         if (element.language == ClojureLanguage.getInstance()) {
             if (isCompositeRef(element)) {
+                log.debug("${element.text} is a composite ref")
                 return findConfigurationByCompositeKey(element)
             }
 
             if (isSingleRef(element)) {
+                log.debug("${element.text} is a ref")
                 return findConfiguration(element)
             }
 
             return if (isQualifiedKeyword(element)) {
+                log.debug("${element.text} is a qualified keyword")
                 val module = ModuleUtil.findModuleForPsiElement(element)
                 module?.let {
                     Util.findImplementations(
