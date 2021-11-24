@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
@@ -18,7 +19,6 @@ import cursive.psi.impl.ClEditorKeyword
 import cursive.psi.impl.ClSharp
 import cursive.psi.impl.ClTaggedLiteralImpl
 import cursive.psi.impl.synthetic.SyntheticKeyword
-
 
 class IntegrantNavigationProvider : DirectNavigationProvider {
     private val log = logger<IntegrantNavigationProvider>()
@@ -55,14 +55,14 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
 
             val clTaggedLiterals =
                 PsiTreeUtil.findChildrenOfType(element.containingFile, ClTaggedLiteralImpl::class.java)
-            log.debug("clTaggedLiterals: ${clTaggedLiterals.map{it.text}}")
+            log.debug("clTaggedLiterals: ${clTaggedLiterals.map { it.text }}")
 
             val includes = clTaggedLiterals.filter { taggedLiteral ->
                 (PsiTreeUtil.findChildOfType(taggedLiteral, ClSharp::class.java)?.let {
                     it.containedElement?.text == "duct/include"
                 } == true)
             }
-            log.debug("includes: ${includes.map{it.text}}")
+            log.debug("includes: ${includes.map { it.text }}")
 
             includes.mapNotNull { includeLiteral ->
                 val maybeOrigFilePath =
@@ -134,12 +134,10 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
             return if (isQualifiedKeyword(element)) {
                 log.debug("${element.text} is a qualified keyword")
                 val module = ModuleUtil.findModuleForPsiElement(element)
+                val projectProductionScope = GlobalSearchScopesCore.projectProductionScope(element.project)
                 module?.let {
-                    Util.findImplementations(
-                        element.project,
-                        module.getModuleWithDependenciesAndLibrariesScope(false)
-                    )
-                        .firstOrNull { it.qualifiedName == element.text }
+                    val scope = projectProductionScope.union(module.getModuleWithDependenciesAndLibrariesScope(false))
+                    Util.findImplementations(element.project, scope).firstOrNull { it.qualifiedName == element.text }
                 }
             } else null
         } else {
