@@ -3,6 +3,8 @@
 # Integrant Changelog
 
 ## [Unreleased]
+
+## [0.1.0]
 ### Added
 - Support navigation from #ig/ref keyword.
 
