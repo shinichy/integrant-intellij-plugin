@@ -6,6 +6,7 @@
 
 ## [0.1.0]
 ### Added
+- Support navigation from #ig/ref keyword.
 
 ## [0.0.1]
 ### Added
