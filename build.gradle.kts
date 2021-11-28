@@ -24,6 +24,11 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    testImplementation("org.jboss.shrinkwrap:shrinkwrap-depchain:1.2.6")
+    testImplementation("org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-depchain:3.1.4")
+}
+
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
 intellij {
     pluginName.set(properties("pluginName"))
