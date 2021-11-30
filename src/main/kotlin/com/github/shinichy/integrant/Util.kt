@@ -16,7 +16,7 @@ object Util {
         return ClojureGoToSymbolContributor()
             .getItemsByName("init-key", "init-key", project, true)
             .filterIsInstance(ClSymbol::class.java)
-            .filter { it.namespace == "integrant.core" } // filter is necessary because there are multiple version integrant.core libraries
+            .filter { it.namespace == "integrant.core" } // filter is necessary because there may be multiple version integrant libraries
             .flatMap { symbol ->
                 ReferencesSearch.search(symbol, scope)
                     .map { UsageInfo(it) }

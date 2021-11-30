@@ -9,6 +9,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
@@ -93,7 +94,7 @@ class IntegrantNavigationProvider : DirectNavigationProvider {
         val keyword = (element.parent as ClEditorKeyword).resolve() as SyntheticKeyword
         val includedFiles = getIncludedFiles(element) + element.containingFile.virtualFile
         log.debug("includedFiles: $includedFiles")
-        val scope = FilesSearchScope(includedFiles.toSet())
+        val scope = GlobalSearchScope.filesWithoutLibrariesScope(element.project, includedFiles)
         return ReferencesSearch.search(keyword, scope).mapNotNull { UsageInfo(it).element }
     }
 
