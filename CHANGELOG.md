@@ -3,6 +3,7 @@
 # Integrant Changelog
 
 ## [Unreleased]
+- Support IntelliJ 2021.3
 
 ## [0.1.0]
 ### Added
